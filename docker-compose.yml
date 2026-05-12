@@ -18,15 +18,28 @@ services:
       retries: 5
 
   airflow:
-    image: apache/airflow:2.7.1-python3.11
+    #image: apache/airflow:2.7.1-python3.11
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: on-failure
     depends_on:
       postgres:
         condition: service_healthy
     environment:
+      
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-qversity-admin}:${POSTGRES_PASSWORD:-qversity-admin}@postgres/${POSTGRES_DB:-qversity}
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+      PYSPARK_PYTHON: python
+      PYSPARK_DRIVER_PYTHON: python
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: qversity
+      POSTGRES_USER: qversity-admin
+      POSTGRES_PASSWORD: qversity-admin
+
       _PIP_ADDITIONAL_REQUIREMENTS: >-
         dbt-core
         dbt-postgres

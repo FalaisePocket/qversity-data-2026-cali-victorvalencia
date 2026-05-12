@@ -7,12 +7,17 @@ import psycopg2
 import json
 import os
 from dotenv import load_dotenv
+import sys
+sys.path.append("/opt/airflow")
+
+from spark.dedup_nested_arrays import bronze_to_silver
+
+
 
 S3_URL = " https://qversity-raw-public-data.s3.amazonaws.com/fintech_banking_dataset.json"
 LOCAL_FILE = "/opt/airflow/data/raw/fintech_banking_dataset.json"
 
 
-load_dotenv()
 
 DB_CONFIG = {
     "host": os.getenv("POSTGRES_HOST", "postgres"),
@@ -36,9 +41,10 @@ def load_to_postgres():
     cursor = conn.cursor()
 
     
-    cursor.execute("""
-        CREATE SCHEMA IF NOT EXISTS bronze;
-    """)
+    cursor.execute("""CREATE SCHEMA IF NOT EXISTS bronze;""")
+    cursor.execute("CREATE SCHEMA IF NOT EXISTS silver;")
+    cursor.execute("CREATE SCHEMA IF NOT EXISTS gold;")
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS bronze.raw_fintech_data (
             id SERIAL PRIMARY KEY,
@@ -100,22 +106,31 @@ with DAG(
     catchup=False,
     is_paused_upon_creation=False
 ) as dag:
-
+    #download data from s3 and save it to local file system
     task_download = PythonOperator(
         task_id="download_from_source",
         python_callable=ingest_from_source,
     )
-
+    #check if the file is available in the local file system
     check_download = FileSensor(
         task_id="wait_for_file",
         filepath=LOCAL_FILE,
         poke_interval=10,
         timeout=300,
     )
-
+    #load the data from the local file system to postgres bronze schema
     task_load = PythonOperator(
         task_id="load_to_postgres_bronze",
         python_callable=load_to_postgres,
     )
-
+    #transform the data from bronze to silver using spark and 
+    # finally load it to postgres silver schema
+    task_bronze_to_silver = PythonOperator(
+        task_id="bronze_to_silver",
+        python_callable=bronze_to_silver,
+    )
+    #ingesting data and staging it to bronze
     task_download >> check_download >> task_load
+    #ingesting data from bronze, transforming it and 
+    #staging it to silver
+    task_load >> task_bronze_to_silver
