@@ -73,7 +73,7 @@ digital_engagement_schema = StructType([
 
 customer_schema = StructType([
     StructField("customer_id", StringType(),True),
-    StructField("fisrt_name", StringType(),True),
+    StructField("first_name", StringType(),True),
     StructField("last_name", StringType(),True),
     StructField("email", StringType(),True),
     StructField("phone_number", StringType(),True),
@@ -83,7 +83,8 @@ customer_schema = StructType([
     StructField("city", StringType(),True),
     StructField("country", StringType(),True),
     StructField("adress", StringType(),True),
-    StructField("lat_lon", FloatType(),True),
+    StructField("lat", FloatType(),True),
+    StructField("lon", FloatType(),True),
     StructField("registration_date", StringType(),True),
     StructField("kyc_status", StringType(),True),
     StructField("risk_score", FloatType(),True),

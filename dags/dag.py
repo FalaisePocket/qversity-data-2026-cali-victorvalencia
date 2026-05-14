@@ -1,5 +1,6 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator
 from airflow.sensors.filesystem import FileSensor
 from datetime import datetime
 import requests
@@ -125,12 +126,28 @@ with DAG(
     )
     #transform the data from bronze to silver using spark and 
     # finally load it to postgres silver schema
-    task_bronze_to_silver = PythonOperator(
+    task_bronze_to_silver_spark = PythonOperator(
         task_id="bronze_to_silver",
         python_callable=bronze_to_silver,
     )
+    #Flattening nested objects
+    silver_normalization_dbt = BashOperator(
+        task_id="silver_normalization_dbt",
+        bash_command="""
+        cd /opt/airflow/dbt &&
+        dbt run --profiles-dir . --target dev
+        """
+    )
+
+
     #ingesting data and staging it to bronze
     task_download >> check_download >> task_load
     #ingesting data from bronze, transforming it and 
     #staging it to silver
-    task_load >> task_bronze_to_silver
+    task_load >> task_bronze_to_silver_spark
+
+
+    task_bronze_to_silver_spark >> silver_normalization_dbt
+
+
+

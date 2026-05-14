@@ -40,13 +40,13 @@ services:
       POSTGRES_USER: qversity-admin
       POSTGRES_PASSWORD: qversity-admin
 
-      _PIP_ADDITIONAL_REQUIREMENTS: >-
-        dbt-core
-        dbt-postgres
-        pandas
-        boto3
-        pyspark
-        psycopg2-binary
+      #_PIP_ADDITIONAL_REQUIREMENTS: >-
+      #  dbt-core
+      #  dbt-postgres
+      #  pandas
+      #  boto3
+      #  pyspark
+      #  psycopg2-binary
     volumes:
       - ./dags:/opt/airflow/dags
       - ./spark:/opt/airflow/spark
