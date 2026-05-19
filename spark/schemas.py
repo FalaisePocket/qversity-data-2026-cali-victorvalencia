@@ -82,7 +82,7 @@ customer_schema = StructType([
     StructField("nationality", StringType(),True),
     StructField("city", StringType(),True),
     StructField("country", StringType(),True),
-    StructField("adress", StringType(),True),
+    StructField("address", StringType(),True),
     StructField("lat", FloatType(),True),
     StructField("lon", FloatType(),True),
     StructField("registration_date", StringType(),True),
@@ -127,28 +127,3 @@ customer_schema = StructType([
 
 
 
-'''#age additional field
-    StructField("age", IntegerType(),True),
-    #age_buckets additional field
-    StructField("age_buckets", StringType(),True),
-    #tenure additional field
-    StructField("tenure", IntegerType(),True),'''
-
-
-
-'''from pyspark.sql.types import StructType
-
-def flatten_structs(df):
-    flat_cols = []
-
-    for field in df.schema.fields:
-        if isinstance(field.dataType, StructType):
-            for nested in field.dataType.fields:
-                flat_cols.append(
-                    col(f"{field.name}.{nested.name}")
-                    .alias(f"{field.name}_{nested.name}")
-                )
-        else:
-            flat_cols.append(col(field.name))
-
-    return df.select(flat_cols)'''

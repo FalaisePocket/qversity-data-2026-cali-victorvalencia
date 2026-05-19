@@ -1,18 +1,26 @@
+-- models/marts/facts/fact_credit_info.sql
+
 {{ config(materialized='table') }}
 
 SELECT
-    customer_id,
+    c.customer_id,
 
-    (credit_info::jsonb ->> 'credit_score')::integer AS credit_score,
-    credit_info::jsonb ->> 'currency' AS currency,
-    (credit_info::jsonb ->> 'utilization_pct')::float AS utilization_pct,
-    (credit_info::jsonb ->> 'total_limit')::float AS total_limit,
-    (credit_info::jsonb ->> 'total_used')::float AS total_used,
-    (credit_info::jsonb ->> 'num_credit_accounts')::integer AS num_credit_accounts,
-    (credit_info::jsonb ->> 'oldest_account_age_months')::integer AS oldest_account_age_months,
-    (credit_info::jsonb ->> 'late_payments_12m')::integer AS late_payments_12m,
-    (credit_info::jsonb ->> 'inquiries_6m')::integer AS inquiries_6m,
-    (credit_info::jsonb ->> 'bankruptcy_flag')::boolean AS bankruptcy_flag
+    {{ clamp_values('c.credit_score', 300, 850 ) }} AS credit_score,
 
-FROM {{ source('silver_layer', 'stg_customer') }}
-WHERE credit_info IS NOT NULL
+    currency_dim.currency_id,
+
+    {{ clamp_values('c.utilization_pct',0.00,100.00) }} AS utilization_pct,
+
+    c.total_limit,
+    c.total_used,
+    c.num_credit_accounts,
+    c.oldest_account_age_months,
+    c.late_payments_12m,
+    c.inquiries_6m,
+
+    {{ empty_to_false('c.bankruptcy_flag') }} AS bankruptcy_flag
+
+FROM {{ ref('stg_credit_info') }} c
+
+LEFT JOIN {{ ref('currency') }} currency_dim
+    ON upper(trim(c.currency)) = currency_dim.currency_code

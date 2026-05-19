@@ -1,20 +1,11 @@
 {{ config(materialized='table') }}
 SELECT
     customer_id,
-
-    (digital_engagement::jsonb ->> 'mobile_app_registered')::boolean AS mobile_app_registered,
-
-    (digital_engagement::jsonb ->> 'web_banking_registered')::boolean AS web_banking_registered,
-
-    digital_engagement::jsonb ->> 'last_login_date' AS last_login_date,
-
-    (digital_engagement::jsonb ->> 'avg_monthly_logins')::integer AS avg_monthly_logins,
-
-    digital_engagement::jsonb ->> 'preferred_channel' AS preferred_channel,
-
-    (digital_engagement::jsonb ->> 'push_notifications')::boolean AS push_notifications,
-
-    (digital_engagement::jsonb ->> 'paperless_statements')::boolean AS paperless_statements
-
-FROM {{ source('silver_layer', 'stg_customer') }}
-WHERE digital_engagement IS NOT NULL
+    mobile_app_registered,
+    web_banking_registered,
+    CAST(TO_CHAR({{ standardize_date('last_login_date') }}, 'YYYYMMDD') AS INT) AS last_login_date_id,
+    avg_monthly_logins,
+    preferred_channel,
+    {{ empty_to_false('push_notifications') }} AS push_notifications,
+    {{ empty_to_false('paperless_statements') }} AS paperless_statements
+FROM {{ ref('stg_digital_engagement') }}

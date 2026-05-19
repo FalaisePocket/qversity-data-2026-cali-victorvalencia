@@ -76,6 +76,7 @@ services:
     command: >
       bash -c "
       pip install dbt-core dbt-postgres &&
+      dbt deps &&
       sleep infinity
       "
     depends_on:

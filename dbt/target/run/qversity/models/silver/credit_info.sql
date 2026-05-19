@@ -8,23 +8,56 @@
     as
   
   (
-    
+    -- models/marts/facts/fact_credit_info.sql
+
+
 
 SELECT
-    customer_id,
+    c.customer_id,
 
-    (credit_info::jsonb ->> 'credit_score')::integer AS credit_score,
-    credit_info::jsonb ->> 'currency' AS currency,
-    (credit_info::jsonb ->> 'utilization_pct')::float AS utilization_pct,
-    (credit_info::jsonb ->> 'total_limit')::float AS total_limit,
-    (credit_info::jsonb ->> 'total_used')::float AS total_used,
-    (credit_info::jsonb ->> 'num_credit_accounts')::integer AS num_credit_accounts,
-    (credit_info::jsonb ->> 'oldest_account_age_months')::integer AS oldest_account_age_months,
-    (credit_info::jsonb ->> 'late_payments_12m')::integer AS late_payments_12m,
-    (credit_info::jsonb ->> 'inquiries_6m')::integer AS inquiries_6m,
-    (credit_info::jsonb ->> 'bankruptcy_flag')::boolean AS bankruptcy_flag
+    
 
-FROM "qversity"."silver"."stg_customer"
-WHERE credit_info IS NOT NULL
+    case
+        when c.credit_score < 300 then 300
+        when c.credit_score > 850 then 850
+        else c.credit_score
+    end
+
+ AS credit_score,
+
+    currency_dim.currency_id,
+
+    
+
+    case
+        when c.utilization_pct < 0.0 then 0.0
+        when c.utilization_pct > 100.0 then 100.0
+        else c.utilization_pct
+    end
+
+ AS utilization_pct,
+
+    c.total_limit,
+    c.total_used,
+    c.num_credit_accounts,
+    c.oldest_account_age_months,
+    c.late_payments_12m,
+    c.inquiries_6m,
+
+    
+
+    CASE
+        WHEN c.bankruptcy_flag IS NULL
+             OR trim(c.bankruptcy_flag::text) = ''
+        THEN false
+        ELSE c.bankruptcy_flag
+    END
+
+ AS bankruptcy_flag
+
+FROM "qversity"."public_silver"."stg_credit_info" c
+
+LEFT JOIN "qversity"."public_silver"."currency" currency_dim
+    ON upper(trim(c.currency)) = currency_dim.currency_code
   );
   
