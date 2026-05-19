@@ -105,7 +105,7 @@ with DAG(
         task_id="bronze_to_silver",
         python_callable=bronze_to_silver,
     )
-    #Flattening nested objects
+    #Flattening nested objects and normalizing data in silver layer using dbt
     silver_normalization_dbt = BashOperator(
         task_id="silver_normalization_dbt",
         bash_command="""

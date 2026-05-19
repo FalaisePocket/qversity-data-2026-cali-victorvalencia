@@ -4,7 +4,7 @@
 
 SELECT
     a.account_id,
-
+    a.customer_id,
     {{ remove_spaces('a.account_type') }} AS account_type,
 
     currency_dim.currency_id,
@@ -20,7 +20,7 @@ SELECT
         ) AS INT
     ) AS opened_date_id,
 
-    {{ lower_column('a.status') }} AS status,
+    {{ translate_account_status(lower_column('a.status')) }} AS status,
 
     {{ normalize_na('a.branch_code') }} AS branch_code
 

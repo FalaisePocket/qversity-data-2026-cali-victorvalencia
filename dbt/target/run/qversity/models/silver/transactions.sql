@@ -13,6 +13,7 @@
 
 
 SELECT
+    t.customer_id,
     t.transaction_id,
     t.account_id,
 

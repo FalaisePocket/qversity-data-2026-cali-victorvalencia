@@ -4,7 +4,7 @@
 
 SELECT
     a.account_id,
-
+    a.customer_id,
     
 
     trim(a.account_type)
@@ -50,7 +50,24 @@ END
 
     
 
+CASE
+    WHEN LOWER(
+
     lower(a.status)
+
+) IN ('frozen', 'congelado') THEN 'frozen'
+    WHEN LOWER(
+
+    lower(a.status)
+
+) IN ('closed', 'cerrado') THEN 'closed'
+    WHEN LOWER(
+
+    lower(a.status)
+
+) IN ('active', 'activo') THEN 'active'
+    ELSE 'unknown'
+END
 
  AS status,
 
