@@ -1,0 +1,134 @@
+version: 2
+
+models:
+  # ==========================================
+  # 1. NUEVA DIMENSIÓN DE FECHAS
+  # ==========================================
+  - name: date
+    description: "Tabla de dimensión centralizada para el manejo de fechas (Date Spine / Calendario)."
+    columns:
+      - name: date_id
+        description: "Llave primaria de la dimensión de fecha en formato entero (YYYYMMDD)."
+        tests:
+          - unique
+          - not_null
+      - name: full_date
+        description: "Fecha completa en formato DATE."
+        tests:
+          - not_null
+      - name: year
+        description: "Año de la fecha (ej. 2026)."
+      - name: month
+        description: "Número de mes (1-12)."
+      - name: day
+        description: "Día del mes (1-31)."
+
+  # ==========================================
+  # 2. MODELO DE CUENTAS
+  # ==========================================
+  - name: stg_accounts  # Cambiar al nombre final de tu modelo si aplica (ej. dim_accounts)
+    description: "Información estandarizada de las cuentas bancarias de los clientes."
+    columns:
+      - name: account_id
+        description: "Llave primaria de la cuenta."
+        tests:
+          - unique
+          - not_null
+      - name: account_type
+        description: "Tipo de cuenta sin espacios en blanco superfluos."
+      - name: opened_date_id
+        description: "FK que apunta a date para la fecha de apertura de la cuenta."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('date')
+              field: date_id
+
+  # ==========================================
+  # 3. MODELO DE CLIENTES
+  # ==========================================
+  - name: stg_customer  # Cambiar al nombre final de tu modelo si aplica (ej. dim_customers)
+    description: "Información demográfica, de contacto y perfil de riesgo de los clientes."
+    columns:
+      - name: customer_id
+        description: "Llave primaria del cliente."
+        tests:
+          - unique
+          - not_null
+      - name: date_of_birth_id
+        description: "FK que apunta a date para la fecha de nacimiento del cliente."
+        tests:
+          - relationships:
+              to: ref('date')
+              field: date_id
+      - name: registration_date_id
+        description: "FK que apunta a date para la fecha de registro en el sistema."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('date')
+              field: date_id
+
+  # ==========================================
+  # 4. MODELO DE COMPROMISO DIGITAL
+  # ==========================================
+  - name: stg_digital_engagement  # Cambiar al nombre final de tu modelo si aplica (ej. fct_digital_engagement)
+    description: "Métricas de adopción de canales digitales por cliente."
+    columns:
+      - name: customer_id
+        description: "Llave primaria / identificador único del cliente en canales digitales."
+        tests:
+          - unique
+          - not_null
+      - name: last_login_date_id
+        description: "FK que apunta a date para el último inicio de sesión."
+        tests:
+          - relationships:
+              to: ref('date')
+              field: date_id
+
+  # ==========================================
+  # 5. MODELO DE PRÉSTAMOS
+  # ==========================================
+  - name: stg_loans  # Cambiar al nombre final de tu modelo si aplica (ej. fct_loans)
+    description: "Detalle de los créditos y préstamos otorgados."
+    columns:
+      - name: loan_id
+        description: "Llave primaria del préstamo."
+        tests:
+          - unique
+          - not_null
+      - name: start_date_id
+        description: "FK que apunta a date para la fecha de desembolso/inicio del préstamo."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('date')
+              field: date_id
+      - name: end_date_id
+        description: "FK que apunta a date para la fecha estimada o real de finalización del préstamo."
+        tests:
+          - relationships:
+              to: ref('date')
+              field: date_id
+
+  # ==========================================
+  # 6. MODELO DE TRANSACCIONES
+  # ==========================================
+  - name: transactions
+    description: "Registros de transacciones financieras con referencia al día de la operación."
+    columns:
+      - name: transaction_id
+        description: "Llave primaria de la transacción."
+        tests:
+          - unique
+          - not_null
+      - name: date_id
+        description: "FK que apunta a date para el día de la transacción."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('date')
+              field: date_id
+      - name: account_id
+        description: "Identificador de cuenta asociado a la transacción."
