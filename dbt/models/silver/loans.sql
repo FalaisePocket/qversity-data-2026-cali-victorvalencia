@@ -3,6 +3,7 @@
 {{ config(materialized='table') }}
 
 SELECT
+    l.customer_id,
     l.loan_id,
 
     {{ lower_column('l.type') }} AS type,

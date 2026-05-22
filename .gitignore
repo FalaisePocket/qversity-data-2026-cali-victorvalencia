@@ -3,4 +3,7 @@ __pycache__/
 .env
 venv/
 **/fintech_banking_dataset.json
-logs/
+**/logs/
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/

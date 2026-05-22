@@ -7,6 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-qversity-admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qversity-admin}
       POSTGRES_DB: ${POSTGRES_DB:-qversity}
+      
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

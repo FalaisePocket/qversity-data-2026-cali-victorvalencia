@@ -3,6 +3,7 @@
 
 
 SELECT
+    l.customer_id,
     l.loan_id,
 
     
