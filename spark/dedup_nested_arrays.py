@@ -156,8 +156,12 @@ def bronze_to_silver():
         .withColumn("credit_info", to_json(col("credit_info")))
         .withColumn("digital_engagement", to_json(col("digital_engagement")))
         .drop("accounts", "transactions", "loans")
+        .dropDuplicates(["customer_id"])
         .cache()
     )
+    print("Checking duplicates in customer data...")
+    print(new_customer_df.count())
+    print(new_customer_df.select("customer_id").distinct().count())
 
     print("saving customer data to silver staging table...")
     

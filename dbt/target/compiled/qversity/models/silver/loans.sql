@@ -3,6 +3,7 @@
 
 
 SELECT
+    l.customer_id,
     l.loan_id,
 
     
@@ -93,9 +94,9 @@ END
 
     case
         when l.collateral_type is null then 'N/A'
-        when trim(l.collateral_type) = '' then 'N/A'
-        when upper(trim(l.collateral_type)) in ('NA', 'N/A') then 'N/A'
-        else l.collateral_type
+        when trim(cast(l.collateral_type as text)) = '' then 'N/A'
+        when upper(trim(cast(l.collateral_type as text))) in ('NA', 'N/A', 'NULL','null','none') then 'N/A'
+        else trim(cast(l.collateral_type as text))
     end
 
  AS collateral_type

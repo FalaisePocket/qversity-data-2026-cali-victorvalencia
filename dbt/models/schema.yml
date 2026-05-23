@@ -1,53 +1,129 @@
 version: 2
 
 models:
+
   # ==========================================
-  # 1. NUEVA DIMENSIÓN DE FECHAS
+  # 1. DIMENSIÓN DE FECHAS
   # ==========================================
   - name: date
     description: "Tabla de dimensión centralizada para el manejo de fechas (Date Spine / Calendario)."
     columns:
       - name: date_id
-        description: "Llave primaria de la dimensión de fecha en formato entero (YYYYMMDD)."
+        description: "Llave primaria en formato entero (YYYYMMDD)."
         tests:
           - unique
           - not_null
       - name: full_date
         description: "Fecha completa en formato DATE."
         tests:
+          - unique
           - not_null
       - name: year
         description: "Año de la fecha (ej. 2026)."
+        tests:
+          - not_null
       - name: month
         description: "Número de mes (1-12)."
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
       - name: day
         description: "Día del mes (1-31)."
+        tests:
+          - not_null
+      - name: quarter
+        description: "Trimestre (1-4)."
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4]
+      - name: month_name
+        description: "Nombre completo del mes."
+        tests:
+          - not_null
+      - name: day_name
+        description: "Nombre completo del día de la semana."
+        tests:
+          - not_null
 
   # ==========================================
-  # 2. MODELO DE CUENTAS
+  # 2. DIMENSIÓN DE MONEDAS
   # ==========================================
-  - name: stg_accounts  # Cambiar al nombre final de tu modelo si aplica (ej. dim_accounts)
-    description: "Información estandarizada de las cuentas bancarias de los clientes."
+  - name: currency
+    description: "Catálogo de monedas únicas presentes en el sistema, derivadas de todas las fuentes."
     columns:
-      - name: account_id
-        description: "Llave primaria de la cuenta."
+      - name: currency_id
+        description: "Llave primaria surrogate generada con dbt_utils.generate_surrogate_key."
         tests:
           - unique
           - not_null
-      - name: account_type
-        description: "Tipo de cuenta sin espacios en blanco superfluos."
-      - name: opened_date_id
-        description: "FK que apunta a date para la fecha de apertura de la cuenta."
+      - name: currency_code
+        description: "Código ISO de la moneda (ej. USD, EUR, COP). Siempre en mayúsculas y sin espacios."
+        tests:
+          - unique
+          - not_null
+      - name: currency_from_country
+        description: "Nombre del país o región asociado a la moneda."
         tests:
           - not_null
-          - relationships:
-              to: ref('date')
-              field: date_id
 
   # ==========================================
-  # 3. MODELO DE CLIENTES
+  # 3. DIMENSIÓN DE UBICACIÓN
   # ==========================================
-  - name: stg_customer  # Cambiar al nombre final de tu modelo si aplica (ej. dim_customers)
+  - name: location
+    description: "Catálogo de ubicaciones únicas (ciudad + país) derivadas de los clientes."
+    columns:
+      - name: location_id
+        description: "Llave primaria surrogate generada con dbt_utils.generate_surrogate_key sobre city + short_country."
+        tests:
+          - unique
+          - not_null
+      - name: city
+        description: "Ciudad normalizada (sin espacios extra, capitalizada de forma estándar)."
+        tests:
+          - not_null
+      - name: short_country
+        description: "Código corto del país (ej. CO, US, MX)."
+        tests:
+          - not_null
+      - name: country_name
+        description: "Nombre completo del país."
+        tests:
+          - not_null
+
+  # ==========================================
+  # 4. DIMENSIÓN DE SEGMENTACIÓN DE CLIENTES
+  # ==========================================
+  - name: customer_segmentation
+    description: "Catálogo de combinaciones únicas de segmento, estado, KYC y bucket de riesgo."
+    columns:
+      - name: segmentation_id
+        description: "Llave primaria surrogate generada con dbt_utils.generate_surrogate_key."
+        tests:
+          - unique
+          - not_null
+      - name: customer_segment
+        description: "Segmento del cliente (valores normalizados y en minúsculas)."
+        tests:
+          - not_null
+      - name: status
+        description: "Estado del cliente traducido y normalizado."
+        tests:
+          - not_null
+      - name: kyc_status
+        description: "Estado KYC en minúsculas."
+        tests:
+          - not_null
+      - name: risk_bucket
+        description: "Bucket de riesgo calculado a partir del risk_score."
+        tests:
+          - not_null
+
+  # ==========================================
+  # 5. DIMENSIÓN DE CLIENTES
+  # ==========================================
+  - name: customer
     description: "Información demográfica, de contacto y perfil de riesgo de los clientes."
     columns:
       - name: customer_id
@@ -55,65 +131,121 @@ models:
         tests:
           - unique
           - not_null
-      - name: date_of_birth_id
-        description: "FK que apunta a date para la fecha de nacimiento del cliente."
+      - name: first_name
+        description: "Nombre del cliente."
         tests:
+          - not_null
+      - name: last_name
+        description: "Apellido del cliente."
+        tests:
+          - not_null
+      - name: email
+        description: "Correo electrónico del cliente."
+        tests:
+          - unique
+          - not_null
+      - name: date_of_birth_id
+        description: "FK a dim_date para la fecha de nacimiento."
+        tests:
+          - not_null
           - relationships:
               to: ref('date')
               field: date_id
       - name: registration_date_id
-        description: "FK que apunta a date para la fecha de registro en el sistema."
+        description: "FK a dim_date para la fecha de registro en el sistema."
         tests:
           - not_null
           - relationships:
               to: ref('date')
               field: date_id
+      - name: location_id
+        description: "FK a dim_location para la ciudad y país del cliente."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('location')
+              field: location_id
+      - name: segmentation_id
+        description: "FK a dim_customer_segmentation para el perfil de segmentación."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('customer_segmentation')
+              field: segmentation_id
+      - name: lat
+        description: "Latitud geográfica del cliente, clampeada entre -90 y 90."
+        tests:
+          - not_null
+      - name: lon
+        description: "Longitud geográfica del cliente, clampeada entre -180 y 90."
+        tests:
+          - not_null
+      - name: age
+        description: "Edad calculada del cliente en años."
+        tests:
+          - not_null
+      - name: age_bucket
+        description: "Rango etario del cliente (ej. 18-25, 26-35, etc.)."
+        tests:
+          - not_null
+      - name: tenure_years
+        description: "Años de antigüedad del cliente desde su registro."
+        tests:
+          - not_null
+      - name: tenure_bucket
+        description: "Bucket de antigüedad del cliente."
+        tests:
+          - not_null
 
   # ==========================================
-  # 4. MODELO DE COMPROMISO DIGITAL
+  # 6. FACT: CUENTAS BANCARIAS
   # ==========================================
-  - name: stg_digital_engagement  # Cambiar al nombre final de tu modelo si aplica (ej. fct_digital_engagement)
-    description: "Métricas de adopción de canales digitales por cliente."
+  - name: accounts
+    description: "Información estandarizada de las cuentas bancarias de los clientes."
     columns:
+      - name: account_id
+        description: "Llave primaria de la cuenta."
+        tests:
+          - unique
+          - not_null
       - name: customer_id
-        description: "Llave primaria / identificador único del cliente en canales digitales."
+        description: "FK al cliente propietario de la cuenta."
         tests:
-          - unique
           - not_null
-      - name: last_login_date_id
-        description: "FK que apunta a date para el último inicio de sesión."
+          - relationships:
+              to: ref('customer')
+              field: customer_id
+      - name: account_type
+        description: "Tipo de cuenta sin espacios en blanco superfluos."
         tests:
+          - not_null
+      - name: currency_id
+        description: "FK a dim_currency para la moneda de la cuenta."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('currency')
+              field: currency_id
+      - name: balance
+        description: "Saldo actual de la cuenta."
+        tests:
+          - not_null
+      - name: opened_date_id
+        description: "FK a dim_date para la fecha de apertura de la cuenta."
+        tests:
+          - not_null
           - relationships:
               to: ref('date')
               field: date_id
+      - name: status
+        description: "Estado de la cuenta (traducido y normalizado)."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['active', 'inactive', 'closed', 'suspended', 'frozen']
 
   # ==========================================
-  # 5. MODELO DE PRÉSTAMOS
-  # ==========================================
-  - name: stg_loans  # Cambiar al nombre final de tu modelo si aplica (ej. fct_loans)
-    description: "Detalle de los créditos y préstamos otorgados."
-    columns:
-      - name: loan_id
-        description: "Llave primaria del préstamo."
-        tests:
-          - unique
-          - not_null
-      - name: start_date_id
-        description: "FK que apunta a date para la fecha de desembolso/inicio del préstamo."
-        tests:
-          - not_null
-          - relationships:
-              to: ref('date')
-              field: date_id
-      - name: end_date_id
-        description: "FK que apunta a date para la fecha estimada o real de finalización del préstamo."
-        tests:
-          - relationships:
-              to: ref('date')
-              field: date_id
-
-  # ==========================================
-  # 6. MODELO DE TRANSACCIONES
+  # 7. FACT: TRANSACCIONES FINANCIERAS
   # ==========================================
   - name: transactions
     description: "Registros de transacciones financieras con referencia al día de la operación."
@@ -123,12 +255,211 @@ models:
         tests:
           - unique
           - not_null
+      - name: customer_id
+        description: "FK al cliente que realizó la transacción."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('customer')
+              field: customer_id
+      - name: account_id
+        description: "FK a la cuenta asociada a la transacción."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('accounts')
+              field: account_id
       - name: date_id
-        description: "FK que apunta a date para el día de la transacción."
+        description: "FK a dim_date para el día de la transacción."
         tests:
           - not_null
           - relationships:
               to: ref('date')
               field: date_id
-      - name: account_id
-        description: "Identificador de cuenta asociado a la transacción."
+      - name: amount
+        description: "Monto de la transacción."
+        tests:
+          - not_null
+      - name: currency_id
+        description: "FK a dim_currency para la moneda de la transacción."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('currency')
+              field: currency_id
+      - name: type
+        description: "Tipo de transacción (normalizado y traducido)."
+        tests:
+          - not_null
+      - name: status
+        description: "Estado de la transacción en minúsculas."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['completed', 'pending', 'failed', 'reversed', 'cancelled']
+      - name: channel
+        description: "Canal por el que se realizó la transacción."
+        tests:
+          - not_null
+
+  # ==========================================
+  # 8. FACT: PRÉSTAMOS
+  # ==========================================
+  - name: loans
+    description: "Detalle de los créditos y préstamos otorgados."
+    columns:
+      - name: loan_id
+        description: "Llave primaria del préstamo."
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "FK al cliente titular del préstamo."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('customer')
+              field: customer_id
+      - name: currency_id
+        description: "FK a dim_currency para la moneda del préstamo."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('currency')
+              field: currency_id
+      - name: start_date_id
+        description: "FK a dim_date para la fecha de inicio/desembolso del préstamo."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('date')
+              field: date_id
+      - name: end_date_id
+        description: "FK a dim_date para la fecha estimada o real de finalización."
+        tests:
+          - relationships:
+              to: ref('date')
+              field: date_id
+      - name: type
+        description: "Tipo de préstamo (normalizado en minúsculas)."
+        tests:
+          - not_null
+      - name: status
+        description: "Estado del préstamo (normalizado en minúsculas)."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['active', 'paid', 'defaulted', 'restructured', 'closed']
+      - name: principal
+        description: "Monto original del préstamo."
+        tests:
+          - not_null
+      - name: outstanding_balance
+        description: "Saldo pendiente del préstamo."
+        tests:
+          - not_null
+      - name: interest_rate
+        description: "Tasa de interés del préstamo."
+        tests:
+          - not_null
+      - name: days_past_due
+        description: "Días de mora del préstamo."
+        tests:
+          - not_null
+
+  # ==========================================
+  # 9. FACT: INFORMACIÓN CREDITICIA
+  # ==========================================
+  - name: credit_info
+    description: "Perfil crediticio del cliente con score, utilización y comportamiento de pago."
+    columns:
+      - name: customer_id
+        description: "Llave primaria / FK al cliente."
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('customer')
+              field: customer_id
+      - name: credit_score
+        description: "Score crediticio, clampeado entre 300 y 850."
+        tests:
+          - not_null
+      - name: currency_id
+        description: "FK a dim_currency para la moneda del perfil crediticio."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('currency')
+              field: currency_id
+      - name: utilization_pct
+        description: "Porcentaje de utilización del crédito, clampeado entre 0.00 y 100.00."
+        tests:
+          - not_null
+      - name: total_limit
+        description: "Límite total de crédito disponible."
+        tests:
+          - not_null
+      - name: total_used
+        description: "Total de crédito utilizado."
+        tests:
+          - not_null
+      - name: late_payments_12m
+        description: "Número de pagos tardíos en los últimos 12 meses."
+        tests:
+          - not_null
+      - name: inquiries_6m
+        description: "Consultas de crédito en los últimos 6 meses."
+        tests:
+          - not_null
+      - name: bankruptcy_flag
+        description: "Indicador de quiebra (booleano, normalizado desde vacío/texto)."
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+
+  # ==========================================
+  # 10. FACT: COMPROMISO DIGITAL
+  # ==========================================
+  - name: digital_engagement
+    description: "Métricas de adopción de canales digitales por cliente."
+    columns:
+      - name: customer_id
+        description: "Llave primaria / FK al cliente en canales digitales."
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('customer')
+              field: customer_id
+      - name: last_login_date_id
+        description: "FK a dim_date para el último inicio de sesión."
+        tests:
+          - relationships:
+              to: ref('date')
+              field: date_id
+      - name: mobile_app_registered
+        description: "Indica si el cliente tiene la app móvil registrada."
+        tests:
+          - not_null
+      - name: web_banking_registered
+        description: "Indica si el cliente tiene banca web registrada."
+        tests:
+          - not_null
+      - name: preferred_channel
+        description: "Canal digital preferido del cliente."
+        tests:
+          - not_null
+      - name: push_notifications
+        description: "Si tiene notificaciones push activas (booleano normalizado)."
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
+      - name: paperless_statements
+        description: "Si optó por estados de cuenta digitales (booleano normalizado)."
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]
