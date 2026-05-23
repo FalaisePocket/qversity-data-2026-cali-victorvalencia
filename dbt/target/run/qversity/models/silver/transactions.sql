@@ -48,7 +48,11 @@ END
         ) AS INT
     ) AS date_id,
 
-    t.amount,
+    
+
+    coalesce(t.amount, 0)
+
+ AS amount,
 
     currency_dim.currency_id,
 

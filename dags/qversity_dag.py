@@ -57,7 +57,8 @@ with DAG(
         docker exec dbt bash -c "
             cd /dbt &&
             dbt deps &&
-            dbt run --profiles-dir /dbt --target dev
+            dbt run --profiles-dir /dbt --target dev &&
+            dbt test --profiles-dir /dbt --target dev
         "
         """
     )

@@ -13,7 +13,11 @@ SELECT
 
     currency_dim.currency_id,
 
-    a.balance,
+    
+
+    coalesce(a.balance, 0)
+
+ AS balance,
     a.credit_limit,
     a.interest_rate,
 

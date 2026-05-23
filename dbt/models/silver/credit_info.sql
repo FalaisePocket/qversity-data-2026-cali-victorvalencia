@@ -9,10 +9,10 @@ SELECT
 
     currency_dim.currency_id,
 
-    {{ clamp_values('c.utilization_pct',0.00,100.00) }} AS utilization_pct,
+    {{ clamp_values(fill_null_utilization('c.utilization_pct','c.total_limit','c.total_used'),0.00,100.00) }} AS utilization_pct,
 
-    c.total_limit,
-    c.total_used,
+    {{ null_to_zero('c.total_limit') }} AS total_limit,
+    {{ null_to_zero('c.total_used') }} AS total_used,
     c.num_credit_accounts,
     c.oldest_account_age_months,
     c.late_payments_12m,

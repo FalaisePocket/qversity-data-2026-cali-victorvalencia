@@ -42,3 +42,4 @@ ON
 
     AND {{ risk_bucket('c.risk_score') }}
         = s.risk_bucket
+WHERE c.email IS NOT NULL

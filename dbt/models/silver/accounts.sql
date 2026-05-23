@@ -9,7 +9,7 @@ SELECT
 
     currency_dim.currency_id,
 
-    a.balance,
+    {{ null_to_zero('a.balance') }} AS balance,
     a.credit_limit,
     a.interest_rate,
 

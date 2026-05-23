@@ -30,15 +30,50 @@ SELECT
     
 
     case
-        when c.utilization_pct < 0.0 then 0.0
-        when c.utilization_pct > 100.0 then 100.0
-        else c.utilization_pct
+        when 
+
+    case 
+        when c.utilization_pct is not null then c.utilization_pct
+        when coalesce(c.total_used, 0) = 0 then 0
+        else (coalesce(c.total_limit, 0) * 100.0) 
+             / coalesce(c.total_used, 0)
+    end
+
+ < 0.0 then 0.0
+        when 
+
+    case 
+        when c.utilization_pct is not null then c.utilization_pct
+        when coalesce(c.total_used, 0) = 0 then 0
+        else (coalesce(c.total_limit, 0) * 100.0) 
+             / coalesce(c.total_used, 0)
+    end
+
+ > 100.0 then 100.0
+        else 
+
+    case 
+        when c.utilization_pct is not null then c.utilization_pct
+        when coalesce(c.total_used, 0) = 0 then 0
+        else (coalesce(c.total_limit, 0) * 100.0) 
+             / coalesce(c.total_used, 0)
+    end
+
+
     end
 
  AS utilization_pct,
 
-    c.total_limit,
-    c.total_used,
+    
+
+    coalesce(c.total_limit, 0)
+
+ AS total_limit,
+    
+
+    coalesce(c.total_used, 0)
+
+ AS total_used,
     c.num_credit_accounts,
     c.oldest_account_age_months,
     c.late_payments_12m,

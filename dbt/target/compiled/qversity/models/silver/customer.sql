@@ -868,3 +868,4 @@ END
 
 
         = s.risk_bucket
+WHERE c.email IS NOT NULL
