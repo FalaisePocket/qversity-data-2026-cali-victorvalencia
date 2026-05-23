@@ -14,7 +14,7 @@ SELECT
         ) AS INT
     ) AS date_id,
 
-    t.amount,
+    {{ null_to_zero('t.amount')}} AS amount,
 
     currency_dim.currency_id,
 

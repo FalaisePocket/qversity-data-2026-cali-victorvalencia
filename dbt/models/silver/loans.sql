@@ -10,9 +10,9 @@ SELECT
 
     currency_dim.currency_id,
 
-    l.principal,
-    l.outstanding_balance,
-    l.interest_rate,
+    {{ null_to_zero('l.principal')}} AS principal,
+    {{ null_to_zero('l.outstanding_balance') }} AS outstanding_balance,
+    {{ null_to_zero('l.interest_rate') }} AS interest_rate,
     l.term_months,
     l.monthly_payment,
 
@@ -32,7 +32,7 @@ SELECT
 
     {{ lower_column('l.status') }} AS status,
 
-    l.days_past_due,
+    {{ null_to_zero('l.days_past_due')}} AS days_past_due,
 
     {{ normalize_na('l.collateral_type') }} AS collateral_type
 
@@ -40,3 +40,5 @@ FROM {{ source('silver_layer', 'stg_loans') }} l
 
 LEFT JOIN {{ ref('currency') }} currency_dim
     ON upper(trim(l.currency)) = currency_dim.currency_code
+
+WHERE l.loan_id IS NOT NULL

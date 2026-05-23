@@ -14,9 +14,21 @@ SELECT
 
     currency_dim.currency_id,
 
-    l.principal,
-    l.outstanding_balance,
-    l.interest_rate,
+    
+
+    coalesce(l.principal, 0)
+
+ AS principal,
+    
+
+    coalesce(l.outstanding_balance, 0)
+
+ AS outstanding_balance,
+    
+
+    coalesce(l.interest_rate, 0)
+
+ AS interest_rate,
     l.term_months,
     l.monthly_payment,
 
@@ -88,7 +100,11 @@ END
 
  AS status,
 
-    l.days_past_due,
+    
+
+    coalesce(l.days_past_due, 0)
+
+ AS days_past_due,
 
     
 
@@ -105,3 +121,5 @@ FROM "qversity"."silver"."stg_loans" l
 
 LEFT JOIN "qversity"."public_silver"."currency" currency_dim
     ON upper(trim(l.currency)) = currency_dim.currency_code
+
+WHERE l.loan_id IS NOT NULL

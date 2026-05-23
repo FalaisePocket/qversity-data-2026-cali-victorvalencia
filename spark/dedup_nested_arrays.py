@@ -3,7 +3,7 @@ from pyspark.sql.functions import from_json, explode_outer, col, to_json
 import psycopg2
 import os
 from dotenv import load_dotenv
-from spark.schemas import customer_schema, credit_info_schema, digital_engagement_schema, loan_schema
+from spark.schemas import customer_schema, credit_info_schema, digital_engagement_schema, loan_schema, transaction_schema, account_schema
 
 def bronze_to_silver():
 
@@ -67,10 +67,8 @@ def bronze_to_silver():
         ##################################################
         ##counting the number of records in each dataframe
         ##################################################
-
         
         original_count = df.count()
-
 
         ######################
         ###dropping duplicates
@@ -79,7 +77,6 @@ def bronze_to_silver():
         deduped_df = df.dropDuplicates(dedup_cols)
         
         
-
         #############################################################################
         ###counting the number of records in each dataframe after dropping duplicates
         #############################################################################
@@ -87,7 +84,6 @@ def bronze_to_silver():
         deduped_count = deduped_df.count()
         print(f"[{array_col_name}] Original: {original_count} | After dedup: {deduped_count} | Removed: {original_count - deduped_count}")
         
-
         ###################
         ##staging to silver
         ###################
@@ -157,6 +153,7 @@ def bronze_to_silver():
         .withColumn("digital_engagement", to_json(col("digital_engagement")))
         .drop("accounts", "transactions", "loans")
         .dropDuplicates(["customer_id"])
+        .dropna(subset=["email"])
         .cache()
     )
     print("Checking duplicates in customer data...")

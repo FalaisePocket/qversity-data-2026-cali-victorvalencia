@@ -3,68 +3,70 @@ version: 2
 models:
 
   # ==========================================
-  # 1. DIMENSIÓN DE FECHAS
+  # 1. Date dimension
   # ==========================================
   - name: date
-    description: "Tabla de dimensión centralizada para el manejo de fechas (Date Spine / Calendario)."
+    description: "Dimension made to manage the dates with enriched data to facilitate the analysis."
     columns:
       - name: date_id
-        description: "Llave primaria en formato entero (YYYYMMDD)."
+        description: "Primary key with int format (YYYYMMDD)."
         tests:
           - unique
           - not_null
       - name: full_date
-        description: "Fecha completa en formato DATE."
+        description: "Full date in date format."
         tests:
           - unique
           - not_null
       - name: year
-        description: "Año de la fecha (ej. 2026)."
+        description: "year of the date."
         tests:
           - not_null
       - name: month
-        description: "Número de mes (1-12)."
+        description: "month number (1-12)."
         tests:
           - not_null
           - accepted_values:
               values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
       - name: day
-        description: "Día del mes (1-31)."
+        description: "Day of the date (1-31)."
         tests:
           - not_null
       - name: quarter
-        description: "Trimestre (1-4)."
+        description: "quarter of the date (1-4)."
         tests:
           - not_null
           - accepted_values:
               values: [1, 2, 3, 4]
       - name: month_name
-        description: "Nombre completo del mes."
+        description: "Full month name."
         tests:
           - not_null
       - name: day_name
-        description: "Nombre completo del día de la semana."
+        description: "Full day of the week name."
         tests:
           - not_null
+          - accepted_values:
+              values: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
   # ==========================================
   # 2. DIMENSIÓN DE MONEDAS
   # ==========================================
   - name: currency
-    description: "Catálogo de monedas únicas presentes en el sistema, derivadas de todas las fuentes."
+    description: "Currency catalog with unique currency codes and associated country."
     columns:
       - name: currency_id
-        description: "Llave primaria surrogate generada con dbt_utils.generate_surrogate_key."
+        description: "Primary key, a hash."
         tests:
           - unique
           - not_null
       - name: currency_code
-        description: "Código ISO de la moneda (ej. USD, EUR, COP). Siempre en mayúsculas y sin espacios."
+        description: "Currency ISO code."
         tests:
           - unique
           - not_null
       - name: currency_from_country
-        description: "Nombre del país o región asociado a la moneda."
+        description: "currency's country name."
         tests:
           - not_null
 
@@ -72,23 +74,23 @@ models:
   # 3. DIMENSIÓN DE UBICACIÓN
   # ==========================================
   - name: location
-    description: "Catálogo de ubicaciones únicas (ciudad + país) derivadas de los clientes."
+    description: "Location dimension with country and region."
     columns:
       - name: location_id
-        description: "Llave primaria surrogate generada con dbt_utils.generate_surrogate_key sobre city + short_country."
+        description: "Location primary key."
         tests:
           - unique
           - not_null
       - name: city
-        description: "Ciudad normalizada (sin espacios extra, capitalizada de forma estándar)."
+        description: "city location."
         tests:
           - not_null
       - name: short_country
-        description: "Código corto del país (ej. CO, US, MX)."
+        description: "Short country name."
         tests:
           - not_null
       - name: country_name
-        description: "Nombre completo del país."
+        description: "Full country name."
         tests:
           - not_null
 
@@ -96,27 +98,27 @@ models:
   # 4. DIMENSIÓN DE SEGMENTACIÓN DE CLIENTES
   # ==========================================
   - name: customer_segmentation
-    description: "Catálogo de combinaciones únicas de segmento, estado, KYC y bucket de riesgo."
+    description: "catalog of unique combinations of customer segment, status, KYC and risk buscket ."
     columns:
       - name: segmentation_id
-        description: "Llave primaria surrogate generada con dbt_utils.generate_surrogate_key."
+        description: "Primary key."
         tests:
           - unique
           - not_null
       - name: customer_segment
-        description: "Segmento del cliente (valores normalizados y en minúsculas)."
+        description: "customer segment."
         tests:
           - not_null
       - name: status
-        description: "Estado del cliente traducido y normalizado."
+        description: "customer status."
         tests:
           - not_null
       - name: kyc_status
-        description: "Estado KYC en minúsculas."
+        description: "customer's kyc status."
         tests:
           - not_null
       - name: risk_bucket
-        description: "Bucket de riesgo calculado a partir del risk_score."
+        description: "Risk bucket."
         tests:
           - not_null
 
@@ -124,28 +126,23 @@ models:
   # 5. DIMENSIÓN DE CLIENTES
   # ==========================================
   - name: customer
-    description: "Información demográfica, de contacto y perfil de riesgo de los clientes."
+    description: "Customer dimension, the main dimension."
     columns:
       - name: customer_id
-        description: "Llave primaria del cliente."
+        description: "Primary Key."
         tests:
           - unique
           - not_null
       - name: first_name
-        description: "Nombre del cliente."
+        description: "customer first name."
         tests:
           - not_null
       - name: last_name
-        description: "Apellido del cliente."
+        description: "customer last name."
         tests:
-          - not_null
-      - name: email
-        description: "Correo electrónico del cliente."
-        tests:
-          - unique
           - not_null
       - name: date_of_birth_id
-        description: "FK a dim_date para la fecha de nacimiento."
+        description: "Date of birth Foreign Key."
         tests:
           - not_null
           - relationships:
@@ -303,7 +300,7 @@ models:
           - not_null
 
   # ==========================================
-  # 8. FACT: PRÉSTAMOS
+  # 8. FACT: PRESTAMOS
   # ==========================================
   - name: loans
     description: "Detalle de los créditos y préstamos otorgados."
@@ -349,7 +346,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['active', 'paid', 'defaulted', 'restructured', 'closed']
+              values: ['delinquent', 'current', 'paid_off', 'default']
       - name: principal
         description: "Monto original del préstamo."
         tests:
