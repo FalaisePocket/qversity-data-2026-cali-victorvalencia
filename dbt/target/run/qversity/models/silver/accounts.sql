@@ -85,9 +85,9 @@ END
 
     case
         when a.branch_code is null then 'N/A'
-        when trim(a.branch_code) = '' then 'N/A'
-        when upper(trim(a.branch_code)) in ('NA', 'N/A') then 'N/A'
-        else a.branch_code
+        when trim(cast(a.branch_code as text)) = '' then 'N/A'
+        when upper(trim(cast(a.branch_code as text))) in ('NA', 'N/A', 'NULL','null','none') then 'N/A'
+        else trim(cast(a.branch_code as text))
     end
 
  AS branch_code

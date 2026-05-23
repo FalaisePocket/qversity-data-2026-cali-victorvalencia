@@ -104,9 +104,9 @@ END
 
     case
         when gender is null then 'N/A'
-        when trim(gender) = '' then 'N/A'
-        when upper(trim(gender)) in ('NA', 'N/A') then 'N/A'
-        else gender
+        when trim(cast(gender as text)) = '' then 'N/A'
+        when upper(trim(cast(gender as text))) in ('NA', 'N/A', 'NULL','null','none') then 'N/A'
+        else trim(cast(gender as text))
     end
 
  AS gender,
@@ -161,9 +161,9 @@ END
 
     case
         when relationship_manager is null then 'N/A'
-        when trim(relationship_manager) = '' then 'N/A'
-        when upper(trim(relationship_manager)) in ('NA', 'N/A') then 'N/A'
-        else relationship_manager
+        when trim(cast(relationship_manager as text)) = '' then 'N/A'
+        when upper(trim(cast(relationship_manager as text))) in ('NA', 'N/A', 'NULL','null','none') then 'N/A'
+        else trim(cast(relationship_manager as text))
     end
 
  AS relationship_manager,

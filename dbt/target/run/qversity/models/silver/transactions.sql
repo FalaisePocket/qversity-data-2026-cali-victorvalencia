@@ -80,21 +80,21 @@ END
     trim(t.category)
 
  is null then 'N/A'
-        when trim(
+        when trim(cast(
 
     trim(t.category)
 
-) = '' then 'N/A'
-        when upper(trim(
+ as text)) = '' then 'N/A'
+        when upper(trim(cast(
 
     trim(t.category)
 
-)) in ('NA', 'N/A') then 'N/A'
-        else 
+ as text))) in ('NA', 'N/A', 'NULL','null','none') then 'N/A'
+        else trim(cast(
 
     trim(t.category)
 
-
+ as text))
     end
 
  AS category,
@@ -103,9 +103,9 @@ END
 
     case
         when t.merchant is null then 'N/A'
-        when trim(t.merchant) = '' then 'N/A'
-        when upper(trim(t.merchant)) in ('NA', 'N/A') then 'N/A'
-        else t.merchant
+        when trim(cast(t.merchant as text)) = '' then 'N/A'
+        when upper(trim(cast(t.merchant as text))) in ('NA', 'N/A', 'NULL','null','none') then 'N/A'
+        else trim(cast(t.merchant as text))
     end
 
  AS merchant,
